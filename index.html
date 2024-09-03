@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reqres Project</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>User Management</title>
+    <link rel="styles" href="css/style.css">
+
 </head>
 <body>
-    <h1>Reqres User Management</h1>
+    <h1>User Management System</h1>
     
-    <!-- User Creation Form -->
+    <!-- Create User Form -->
     <section id="create-user">
-        <h2>Create New User</h2>
+        <h2>Create User</h2>
         <form id="create-user-form">
-            <label for="first-name">First Name:</label>
-            <input type="text" id="first-name" name="first-name" required>
-            <label for="last-name">Last Name:</label>
-            <input type="text" id="last-name" name="last-name" required>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+            <input id="first-name" type="text" required placeholder="First Name" />
+            <input id="last-name" type="text" required placeholder="Last Name" />
+            <input id="email" type="email" required placeholder="Email" />
             <button type="submit">Create User</button>
         </form>
         <div id="create-user-response"></div>
     </section>
-
-    <!-- User List -->
-    <section id="user-list">
+    
+    <!-- Users List -->
+    <section id="users">
         <h2>Users</h2>
         <div id="user-container"></div> <!-- Container for displaying users -->
     </section>
@@ -35,7 +33,21 @@
         <h2>User Profile</h2>
         <div id="profile-container"></div> <!-- Container for displaying user profile details -->
     </section>
-
+    
+    <!-- User Update Form -->
+    <section id="update-user">
+        <h2>Update User</h2>
+        <form id="update-user-form" style="display: none;">
+            <input id="update-first-name" type="text" required placeholder="First Name" />
+            <input id="update-last-name" type="text" required placeholder="Last Name" />
+            <input id="update-email" type="email" required placeholder="Email" />
+            <input id="update-user-id" type="hidden" /> <!-- Hidden input to store user ID -->
+            <button type="submit">Update User</button>
+        </form>
+        <div id="update-user-response"></div>
+    </section>
+    
     <script src="js/script.js" defer></script>
 </body>
 </html>
+

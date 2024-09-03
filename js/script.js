@@ -1,26 +1,45 @@
-// Function to fetch user data from Reqres API
+// Fetch and display users
 async function fetchUsers() {
-    console.log('Fetching user data...'); // Log when fetching starts
     try {
         const response = await fetch('https://reqres.in/api/users');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        console.log('Fetched data:', data); // Log the fetched data
         displayUsers(data);
     } catch (error) {
-        console.error('Error fetching user data:', error); // Log errors
+        console.error('Error fetching users:', error);
     }
 }
 
-// Function to display users on the page
+// Display users in the user container
 function displayUsers(data) {
     const container = document.getElementById('user-container');
-    if (container) { // Ensure container exists
+    if (container) {
         container.innerHTML = ''; // Clear existing content
         data.data.forEach(user => {
             const userElement = document.createElement('div');
+            userElement.textContent = `User: ${user.first_name} ${user.last_name}`;
+
+            // Add delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(`https://reqres.in/api/users/${user.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        console.log('User deleted:', user.id);
+                        fetchUsers(); // Refresh user list
+                    } else {
+                        console.error('Failed to delete user:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                }
+            });
+
+            userElement.appendChild(deleteButton);
             userElement.innerHTML = `
                 User: ${user.first_name} ${user.last_name}
                 <button class="delete-btn" data-id="${user.id}">Delete</button>
@@ -43,7 +62,7 @@ function displayUsers(data) {
     }
 }
 
-// Function to handle the form submission for creating a new user
+// Handle create user form submission
 document.getElementById('create-user-form').addEventListener('submit', async (event) => {
     event.preventDefault(); // Prevent the default form submission
 
@@ -54,31 +73,33 @@ document.getElementById('create-user-form').addEventListener('submit', async (ev
 
     if (!firstName || !lastName || !email) {
         console.error('Form inputs are missing or invalid');
-        document.getElementById('create-user-response').innerText = 'Error: Missing form input';
+        alert('Please fill out all fields correctly.');
+        return;
+    }
+
+    if (!validateEmail(email)) {
+        console.error('Invalid email format');
+        alert('Please enter a valid email address.');
         return;
     }
 
     try {
-        // Make POST request to Reqres API
         const response = await fetch('https://reqres.in/api/users', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name: `${firstName} ${lastName}`, job: email }), // Adjusted to match the API structure
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ first_name: firstName, last_name: lastName, email })
         });
 
-        const data = await response.json();
-        console.log('User created:', data);
-
-        // Display response in the HTML
-        document.getElementById('create-user-response').innerText = `User created with ID: ${data.id}`;
-
-        // Optionally, fetch and display users again after creating a new one
-        fetchUsers();
+        if (response.ok) {
+            console.log('User created successfully');
+            document.getElementById('create-user-response').textContent = 'User created successfully!';
+            fetchUsers(); // Refresh the user list
+            document.getElementById('create-user-form').reset();
+        } else {
+            throw new Error('Failed to create user');
+        }
     } catch (error) {
         console.error('Error creating user:', error);
-        document.getElementById('create-user-response').innerText = 'Error creating user';
     }
 });
 
@@ -144,8 +165,55 @@ async function handleDeleteUser(event) {
 // Function to handle user update
 function handleUpdateUserButton(event) {
     const userId = event.target.getAttribute('data-id');
-    // Implement the logic to open a modal or prompt for user update details
-    console.log(`Handle update for user with ID: ${userId}`);
+    showUpdateForm(userId); // Show the update form
+}
+
+// Show the update form with user data
+async function showUpdateForm(userId) {
+    const response = await fetch(`https://reqres.in/api/users/${userId}`);
+    const data = await response.json();
+
+    document.getElementById('update-first-name').value = data.data.first_name;
+    document.getElementById('update-last-name').value = data.data.last_name;
+    document.getElementById('update-email').value = data.data.email;
+    document.getElementById('update-user-id').value = userId;
+    document.getElementById('update-user-form').style.display = 'block';
+}
+
+// Handle update form submission
+document.getElementById('update-user-form').addEventListener('submit', async (event) => {
+    event.preventDefault(); // Prevent the default form submission
+
+    const userId = document.getElementById('update-user-id').value;
+    const firstName = document.getElementById('update-first-name').value;
+    const lastName = document.getElementById('update-last-name').value;
+    const email = document.getElementById('update-email').value;
+
+    try {
+        const response = await fetch(`https://reqres.in/api/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ first_name: firstName, last_name: lastName, email })
+        });
+
+        if (response.ok) {
+            console.log('User updated successfully');
+            document.getElementById('update-user-response').textContent = 'User updated successfully!';
+            fetchUsers(); // Refresh the user list
+            document.getElementById('update-user-form').reset();
+            document.getElementById('update-user-form').style.display = 'none';
+        } else {
+            throw new Error('Failed to update user');
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+    }
+});
+
+// Validate email format
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
 }
 
 // Initial function call
