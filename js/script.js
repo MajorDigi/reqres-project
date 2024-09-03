@@ -1,19 +1,13 @@
-// Variables to manage pagination
-let currentPage = 1;
-const usersPerPage = 5;
-let usersData = [];
-
 // Function to fetch user data from Reqres API
-async function fetchUsers(page = 1, sortBy = 'first_name') {
+async function fetchUsers() {
     console.log('Fetching user data...'); // Log when fetching starts
     try {
-        const response = await fetch(`https://reqres.in/api/users?page=${page}&per_page=${usersPerPage}&sort_by=${sortBy}`);
+        const response = await fetch('https://reqres.in/api/users');
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
         console.log('Fetched data:', data); // Log the fetched data
-        usersData = data.data; // Store fetched data
         displayUsers(data);
     } catch (error) {
         console.error('Error fetching user data:', error); // Log errors
@@ -27,61 +21,44 @@ function displayUsers(data) {
         container.innerHTML = ''; // Clear existing content
         data.data.forEach(user => {
             const userElement = document.createElement('div');
-            userElement.classList.add('user-item');
-            userElement.innerHTML = `
-                <p>User: ${user.first_name} ${user.last_name}</p>
-                <button class="view-details" data-id="${user.id}">View Details</button>
-            `;
-            container.appendChild(userElement);
-        });
+            userElement.textContent = `User: ${user.first_name} ${user.last_name}`;
+            
+            // Add delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(`https://reqres.in/api/users/${user.id}`, {
+                        method: 'DELETE'
+                    });
 
-        // Add event listeners for view details buttons
-        document.querySelectorAll('.view-details').forEach(button => {
-            button.addEventListener('click', () => {
-                const userId = button.getAttribute('data-id');
-                const user = usersData.find(u => u.id == userId);
-                showUserDetails(user);
+                    if (response.ok) {
+                        console.log('User deleted:', user.id);
+                        fetchUsers(); // Refresh user list
+                    } else {
+                        console.error('Failed to delete user:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                }
             });
+
+            userElement.appendChild(deleteButton);
+            container.appendChild(userElement);
         });
     } else {
         console.error('Element with ID "user-container" not found');
     }
 }
 
-// Function to show user details in a modal
-function showUserDetails(user) {
-    const modal = document.getElementById('user-details-modal');
-    const userDetails = document.getElementById('user-details');
-    const closeModal = document.querySelector('#user-details-modal .close');
-    
-    userDetails.innerHTML = `
-        <p><strong>ID:</strong> ${user.id}</p>
-        <p><strong>First Name:</strong> ${user.first_name}</p>
-        <p><strong>Last Name:</strong> ${user.last_name}</p>
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Avatar:</strong> <img src="${user.avatar}" alt="${user.first_name}'s avatar" width="100"></p>
-    `;
-    modal.style.display = 'block';
-
-    closeModal.onclick = () => {
-        modal.style.display = 'none';
-    };
-
-    window.onclick = (event) => {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-}
-
-// Handle form submission for creating a new user
+// Function to handle the form submission for creating a new user
 document.getElementById('create-user-form').addEventListener('submit', async (event) => {
     event.preventDefault(); // Prevent the default form submission
 
     // Get form values
-    const firstName = document.getElementById('first-name') ? document.getElementById('first-name').value : '';
-    const lastName = document.getElementById('last-name') ? document.getElementById('last-name').value : '';
-    const email = document.getElementById('email') ? document.getElementById('email').value : '';
+    const firstName = document.getElementById('first-name').value;
+    const lastName = document.getElementById('last-name').value;
+    const email = document.getElementById('email').value;
 
     if (!firstName || !lastName || !email) {
         console.error('Form inputs are missing or invalid');
@@ -106,32 +83,12 @@ document.getElementById('create-user-form').addEventListener('submit', async (ev
         document.getElementById('create-user-response').innerText = `User created with ID: ${data.id}`;
 
         // Optionally, fetch and display users again after creating a new one
-        fetchUsers(currentPage);
+        fetchUsers();
     } catch (error) {
         console.error('Error creating user:', error);
         document.getElementById('create-user-response').innerText = 'Error creating user';
     }
 });
 
-// Handle pagination
-document.getElementById('prev-page').addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        fetchUsers(currentPage);
-    }
-});
-
-document.getElementById('next-page').addEventListener('click', () => {
-    currentPage++;
-    fetchUsers(currentPage);
-});
-
-// Handle sorting
-document.getElementById('sort-select').addEventListener('change', (event) => {
-    const sortBy = event.target.value;
-    fetchUsers(currentPage, sortBy);
-});
-
 // Initial function call
-fetchUsers(currentPage);
-
+fetchUsers();
