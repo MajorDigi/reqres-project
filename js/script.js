@@ -1,93 +1,91 @@
+// Variables to manage pagination
 let currentPage = 1;
 const usersPerPage = 5;
-let totalUsers = 0;
+let usersData = [];
 
-async function fetchUsers(page = 1, sortBy = 'name') {
+// Function to fetch user data from Reqres API
+async function fetchUsers(page = 1, sortBy = 'first_name') {
     console.log('Fetching user data...'); // Log when fetching starts
     try {
-        const response = await fetch(`https://reqres.in/api/users?page=${page}`);
+        const response = await fetch(`https://reqres.in/api/users?page=${page}&per_page=${usersPerPage}&sort_by=${sortBy}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        totalUsers = data.total;
         console.log('Fetched data:', data); // Log the fetched data
-        displayUsers(data, sortBy);
+        usersData = data.data; // Store fetched data
+        displayUsers(data);
     } catch (error) {
         console.error('Error fetching user data:', error); // Log errors
     }
 }
 
-function displayUsers(data, sortBy) {
+// Function to display users on the page
+function displayUsers(data) {
     const container = document.getElementById('user-container');
     if (container) { // Ensure container exists
         container.innerHTML = ''; // Clear existing content
-        const sortedUsers = sortUsers(data.data, sortBy);
-        sortedUsers.forEach(user => {
+        data.data.forEach(user => {
             const userElement = document.createElement('div');
-            userElement.textContent = `User: ${user.first_name} ${user.last_name}`;
-            userElement.style.cursor = 'pointer';
-            userElement.addEventListener('click', () => displayUserDetails(user));
+            userElement.classList.add('user-item');
+            userElement.innerHTML = `
+                <p>User: ${user.first_name} ${user.last_name}</p>
+                <button class="view-details" data-id="${user.id}">View Details</button>
+            `;
             container.appendChild(userElement);
+        });
+
+        // Add event listeners for view details buttons
+        document.querySelectorAll('.view-details').forEach(button => {
+            button.addEventListener('click', () => {
+                const userId = button.getAttribute('data-id');
+                const user = usersData.find(u => u.id == userId);
+                showUserDetails(user);
+            });
         });
     } else {
         console.error('Element with ID "user-container" not found');
     }
 }
 
-function sortUsers(users, sortBy) {
-    return users.sort((a, b) => {
-        if (sortBy === 'name') {
-            return a.first_name.localeCompare(b.first_name);
-        } else {
-            return a.email.localeCompare(b.email);
+// Function to show user details in a modal
+function showUserDetails(user) {
+    const modal = document.getElementById('user-details-modal');
+    const userDetails = document.getElementById('user-details');
+    const closeModal = document.querySelector('#user-details-modal .close');
+    
+    userDetails.innerHTML = `
+        <p><strong>ID:</strong> ${user.id}</p>
+        <p><strong>First Name:</strong> ${user.first_name}</p>
+        <p><strong>Last Name:</strong> ${user.last_name}</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Avatar:</strong> <img src="${user.avatar}" alt="${user.first_name}'s avatar" width="100"></p>
+    `;
+    modal.style.display = 'block';
+
+    closeModal.onclick = () => {
+        modal.style.display = 'none';
+    };
+
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
         }
-    });
+    };
 }
 
-// Pagination controls
-document.getElementById('prev-page').addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        fetchUsers(currentPage, document.getElementById('sort-select').value);
-    }
-});
-
-document.getElementById('next-page').addEventListener('click', () => {
-    if (currentPage * usersPerPage < totalUsers) {
-        currentPage++;
-        fetchUsers(currentPage, document.getElementById('sort-select').value);
-    }
-});
-
-// Sorting
-document.getElementById('sort-select').addEventListener('change', (event) => {
-    fetchUsers(currentPage, event.target.value);
-});
-
-// Display user details
-function displayUserDetails(user) {
-    alert(`User Details:\nName: ${user.first_name} ${user.last_name}\nEmail: ${user.email}`);
-}
-
-// Function to handle the form submission for creating a new user
+// Handle form submission for creating a new user
 document.getElementById('create-user-form').addEventListener('submit', async (event) => {
     event.preventDefault(); // Prevent the default form submission
 
     // Get form values
-    const firstName = document.getElementById('first-name').value.trim();
-    const lastName = document.getElementById('last-name').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const firstName = document.getElementById('first-name') ? document.getElementById('first-name').value : '';
+    const lastName = document.getElementById('last-name') ? document.getElementById('last-name').value : '';
+    const email = document.getElementById('email') ? document.getElementById('email').value : '';
 
     if (!firstName || !lastName || !email) {
         console.error('Form inputs are missing or invalid');
         document.getElementById('create-user-response').innerText = 'Error: Missing form input';
-        return;
-    }
-
-    if (!validateEmail(email)) {
-        console.error('Invalid email address');
-        document.getElementById('create-user-response').innerText = 'Error: Invalid email address';
         return;
     }
 
@@ -115,10 +113,25 @@ document.getElementById('create-user-form').addEventListener('submit', async (ev
     }
 });
 
-function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-}
+// Handle pagination
+document.getElementById('prev-page').addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        fetchUsers(currentPage);
+    }
+});
+
+document.getElementById('next-page').addEventListener('click', () => {
+    currentPage++;
+    fetchUsers(currentPage);
+});
+
+// Handle sorting
+document.getElementById('sort-select').addEventListener('change', (event) => {
+    const sortBy = event.target.value;
+    fetchUsers(currentPage, sortBy);
+});
 
 // Initial function call
 fetchUsers(currentPage);
+
