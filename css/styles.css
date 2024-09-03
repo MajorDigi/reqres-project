@@ -40,3 +40,17 @@ button:hover {
 #response-message {
     margin-top: 20px;
 }
+
+#user-list {
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+#user-list div {
+    margin-bottom: 10px;
+}
+
+#user-container div {
+    margin: 5px 0;
+    cursor: pointer;
+}

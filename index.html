@@ -27,13 +27,21 @@
     <!-- User List -->
     <section id="user-list">
         <h2>Users</h2>
+        <div>
+            <button id="prev-page" disabled>Previous</button>
+            <button id="next-page">Next</button>
+            <select id="sort-select">
+                <option value="name">Sort by Name</option>
+                <option value="email">Sort by Email</option>
+            </select>
+        </div>
         <div id="user-container"></div> <!-- Container for displaying users -->
     </section>
 
     <script src="js/script.js" defer></script>
-
 </body>
 </html>
+
 
 
 
