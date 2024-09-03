@@ -37,6 +37,11 @@ button:hover {
     background-color: #45a049;
 }
 
-#create-user-response {
+#response-message, #create-user-response {
     margin-top: 20px;
+}
+
+#profile-container img {
+    width: 100px;
+    height: 100px;
 }
